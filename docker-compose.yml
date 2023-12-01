@@ -1,14 +1,31 @@
-version: '3.1'
+version: '3'
+
 services:
-  db:
-    image: postgres
-    restart: always
+  postgres:
+    image: postgres:latest
+    container_name: my_postgres_container
     environment:
-      POSTGRES_PASSWORD: initexample
-      POSTGRES_USER: initexample
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: initexample
+      POSTGRES_DB: database
+      POSTGRES_USER: user_patri
+      POSTGRES_PASSWORD: '1234'
     volumes:
-      - ./dataset:/docker-entrypoint-initdb.d
+      - ./db_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: patricia@ejemplo.com
+      PGADMIN_DEFAULT_PASSWORD: 1234
     ports:
-      - 5432:5432
+      - '8080:80'
+    depends_on:
+      - postgres
+
+  data_loader:
+    image: postgres:latest
+    volumes:
+      - ./csv_data:/csv_data
+    command: bash -c 'psql -h postgres -U user_patri -d database -c '\\copy patinetes FROM '/csv_data/rome_u_journeys.csv' WITH CSV HEADER;''
+    depends_on:
+      - postgres
